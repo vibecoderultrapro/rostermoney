@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roster Money — which US colleges actually fund your sport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1F2EE;
+    --ink:#131C18;
+    --field:#14342B;
+    --line:#D5D9CE;
+    --warn:#8A5600;
+    --muted:#5F6A63;
+    --sans:"Archivo", system-ui, sans-serif;
+    --serif:"Source Serif 4", Georgia, serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       font-size:16px;line-height:1.45;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  a{color:inherit}
+
+  header{padding:40px 0 0}
+  .brand{font-weight:700;font-size:15px;letter-spacing:.02em;margin:0 0 26px;color:var(--field)}
+
+  .answer{font-family:var(--serif);font-size:clamp(28px,5vw,46px);line-height:1.15;
+          margin:0;max-width:24ch;font-weight:400}
+  .answer b{font-weight:600;color:var(--field)}
+  .subanswer{font-family:var(--serif);font-size:17px;color:var(--muted);margin:14px 0 0;max-width:54ch}
+
+  .controls{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 0;
+            padding:18px 0;border-top:2px solid var(--field);border-bottom:1px solid var(--line)}
+  .ctl{flex:1 1 190px;min-width:150px}
+  .ctl label{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-bottom:5px}
+  .ctl select,.ctl input{width:100%;font:inherit;font-size:15px;padding:9px 10px;
+    background:#FBFBF8;border:1px solid var(--line);border-radius:3px;color:var(--ink)}
+  .ctl select:focus,.ctl input:focus{outline:2px solid var(--field);outline-offset:1px}
+
+  .alert{margin:18px 0 0;padding:13px 16px;border-left:4px solid var(--warn);
+         background:#F7F2E7;font-size:14.5px;line-height:1.5;max-width:78ch}
+  .alert b{color:var(--warn)}
+
+  table{width:100%;border-collapse:collapse;margin:22px 0 0;font-size:15px}
+  th{text-align:left;font-weight:600;font-size:12.5px;color:var(--muted);
+     padding:0 12px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+  th.num,td.num{text-align:right;padding-right:0}
+  th button{font:inherit;background:none;border:0;padding:0;color:inherit;cursor:pointer}
+  th button:hover{color:var(--ink)}
+  td{padding:11px 12px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td.school{font-weight:500}
+  td .place{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+  td.div{font-size:13.5px;color:var(--muted)}
+  .nil{color:var(--warn)}
+  .money{font-weight:600}
+
+  .more{margin:22px 0 0}
+  .more button{font:inherit;font-size:15px;padding:9px 18px;background:var(--field);
+    color:var(--paper);border:0;border-radius:3px;cursor:pointer}
+  .empty{padding:40px 0;font-family:var(--serif);font-size:18px;color:var(--muted)}
+
+  footer{margin:56px 0 70px;padding-top:22px;border-top:1px solid var(--line);
+         font-family:var(--serif);font-size:15px;color:var(--muted)}
+  footer h3{font-family:var(--sans);font-size:15px;font-weight:600;color:var(--ink);margin:0 0 8px}
+  footer p{margin:0 0 13px;max-width:74ch;line-height:1.6}
+  footer b{color:var(--ink)}
+
+  @media (max-width:760px){
+    thead{display:none}
+    tr{display:block;padding:14px 0;border-bottom:1px solid var(--line)}
+    td{display:flex;justify-content:space-between;gap:16px;border:0;padding:3px 0}
+    td.school{display:block;margin-bottom:6px}
+    td::before{content:attr(data-l);font-size:13px;color:var(--muted)}
+    td.school::before{content:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="brand">Roster Money</p>
+  <h1 class="answer" id="answer">Loading the 2024–25 federal athletics data…</h1>
+  <p class="subanswer" id="subanswer"></p>
+</header>
+
+<div class="controls">
+  <div class="ctl">
+    <label for="sport">Sport</label>
+    <select id="sport"></select>
+  </div>
+  <div class="ctl">
+    <label for="gender">Team</label>
+    <select id="gender">
+      <option value="m">Men's</option>
+      <option value="w">Women's</option>
+    </select>
+  </div>
+  <div class="ctl">
+    <label for="division">Division</label>
+    <select id="division"></select>
+  </div>
+  <div class="ctl">
+    <label for="q">Find a school</label>
+    <input id="q" type="search" placeholder="e.g. Stanford" autocomplete="off">
+  </div>
+</div>
+
+<div id="alert"></div>
+
+<table id="tbl">
+  <thead>
+    <tr>
+      <th>School</th>
+      <th>Division</th>
+      <th class="num"><button data-sort="roster">Roster spots</button></th>
+      <th class="num"><button data-sort="aid">Aid per athlete</button></th>
+      <th class="num"><button data-sort="spend">Spend per athlete</button></th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<div class="more" id="more"></div>
+
+<footer>
+  <h3>Read this before you trust a number</h3>
+  <p><b>Aid per athlete is school-wide, not sport-specific.</b> The federal filing reports athletic aid as one total for all men's teams and one for all women's teams. It does not say how much went to your sport. At a school with a football team, most of that money is going to football. Treat the figure as a signal of how much a department spends on its athletes overall, not as an offer you might receive.</p>
+  <p><b>Division III cannot award athletic scholarships at all.</b> Those schools appear here with no aid figure. They may still offer academic or need-based money, which this data does not cover.</p>
+  <p><b>Roster spots are last season's participant counts</b>, and Division I roster rules changed recently. Read the number as squad size, not as openings.</p>
+  <p>Source: US Department of Education, Equity in Athletics Disclosure Act, 2024–25 collection. Every institution that receives federal student aid and runs an intercollegiate programme has to file. Nothing here is an offer, a prediction, or advice. It is a map of where the money and the roster spots are, so you know which coaches are worth emailing.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var DATA=null, shown=50, sortKey='aid', sortDir=-1;
+  var $=function(i){return document.getElementById(i)};
+
+  function money(n){ return '$'+n.toLocaleString('en-US') }
+
+  function load(){
+    fetch('roster.json').then(function(r){return r.json()}).then(function(d){
+      DATA=d; init();
+    }).catch(function(){
+      $('answer').textContent='Could not load roster.json.';
+      $('subanswer').textContent='It has to sit in the same folder as this page, and the page has to be served over http rather than opened straight from disk. Run: python3 -m http.server';
+    });
+  }
+
+  function init(){
+    var sp=$('sport');
+    DATA.sports.forEach(function(s,i){
+      var o=document.createElement('option'); o.value=i; o.textContent=s; sp.appendChild(o);
+    });
+    var t=DATA.sports.indexOf('Tennis'); sp.value = t>-1 ? t : 0;
+
+    var divs=Object.keys(DATA.schools.reduce(function(a,s){a[s[2]]=1;return a},{})).sort();
+    $('division').innerHTML='<option value="~aid">Only divisions that give athletic aid</option>'+
+      '<option value="">All divisions</option>'+
+      divs.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join('');
+
+    ['sport','gender','division','q'].forEach(function(id){
+      $(id).addEventListener('input',function(){shown=50;render()});
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('th button'),function(b){
+      b.addEventListener('click',function(){
+        var k=b.getAttribute('data-sort');
+        if(sortKey===k) sortDir=-sortDir; else {sortKey=k;sortDir=-1;}
+        render();
+      });
+    });
+    render();
+  }
+
+  function matching(divOverride){
+    var sportIdx=parseInt($('sport').value,10);
+    var men=$('gender').value==='m';
+    var div=divOverride!==undefined?divOverride:$('division').value;
+    var q=$('q').value.trim().toLowerCase();
+
+    var out=[];
+    DATA.teams.forEach(function(t){
+      if(t[1]!==sportIdx) return;
+      var roster = men ? t[2] : t[3];
+      if(!roster) return;
+      var s=DATA.schools[t[0]];
+      var aid = men ? s[3] : s[4];
+      if(div==='~aid' && !aid) return;
+      if(div && div!=='~aid' && s[2]!==div) return;
+      if(q && s[0].toLowerCase().indexOf(q)===-1) return;
+      out.push({name:s[0], place:s[1], div:s[2], roster:roster, aid:aid,
+                spend: men ? t[4] : t[5]});
+    });
+    return out;
+  }
+
+  function render(){
+    var men=$('gender').value==='m';
+    var sportName=DATA.sports[parseInt($('sport').value,10)];
+    var rows=matching();
+    var all=matching('');
+
+    var funded=all.filter(function(r){return r.aid}).length;
+    var spots=all.reduce(function(a,r){return a+r.roster},0);
+
+    $('answer').innerHTML='<b>'+all.length+'</b> US colleges field '+
+      (men?"men's ":"women's ")+sportName.toLowerCase()+'. <b>'+funded+
+      '</b> of them give athletic aid.';
+    $('subanswer').textContent=spots.toLocaleString('en-US')+
+      ' roster spots across the country last season.';
+
+    var div=$('division').value;
+    $('alert').innerHTML = div.indexOf('III')>-1
+      ? '<div class="alert"><b>Division III schools cannot award athletic scholarships.</b> '+
+        'The rosters are real and the coaching is often strong, but any money would have to come '+
+        'from academic or need-based aid instead.</div>'
+      : '';
+
+    rows.sort(function(a,b){
+      var x=a[sortKey], y=b[sortKey];
+      if(!x && x!==0) return 1;
+      if(!y && y!==0) return -1;
+      return (x-y)*sortDir;
+    });
+
+    var slice=rows.slice(0,shown);
+    $('rows').innerHTML = slice.map(function(r){
+      return '<tr>'+
+        '<td class="school">'+r.name+'<span class="place">'+r.place+'</span></td>'+
+        '<td class="div" data-l="Division">'+r.div+'</td>'+
+        '<td class="num" data-l="Roster spots">'+r.roster+'</td>'+
+        '<td class="num '+(r.aid?'money':'nil')+'" data-l="Aid per athlete">'+
+          (r.aid?money(r.aid):'No athletic aid')+'</td>'+
+        '<td class="num" data-l="Spend per athlete">'+(r.spend?money(r.spend):'—')+'</td>'+
+      '</tr>';
+    }).join('');
+
+    $('tbl').style.display = slice.length ? '' : 'none';
+    $('more').innerHTML = rows.length>shown
+      ? '<button id="mb">Show '+Math.min(50,rows.length-shown)+' more of '+rows.length+'</button>'
+      : (slice.length ? '' : '<p class="empty">Nothing matches that combination. Try All divisions, or clear the school search.</p>');
+    if($('mb')) $('mb').addEventListener('click',function(){shown+=50;render()});
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
