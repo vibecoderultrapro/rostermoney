@@ -158,7 +158,8 @@
     DATA.sports.forEach(function(s,i){
       var o=document.createElement('option'); o.value=i; o.textContent=s; sp.appendChild(o);
     });
-    var t=DATA.sports.indexOf('Tennis'); sp.value = t>-1 ? t : 0;
+   sp.insertBefore(new Option('Choose your sport…',''), sp.firstChild);
+    sp.value='';
 
     var divs=Object.keys(DATA.schools.reduce(function(a,s){a[s[2]]=1;return a},{})).sort();
     $('division').innerHTML='<option value="~aid">Only divisions that give athletic aid</option>'+
@@ -200,7 +201,15 @@
     return out;
   }
 
-  function render(){
+   function render(){
+    if($('sport').value===''){
+      $('answer').textContent='Which sport do you play?';
+      $('subanswer').textContent='2,032 US colleges filed athletics data for 2024–25. Pick a sport to see which of them fund it, how much they spend per athlete, and how many roster spots exist.';
+      $('alert').innerHTML='';
+      $('tbl').style.display='none';
+      $('more').innerHTML='';
+      return;
+    }
     var men=$('gender').value==='m';
     var sportName=DATA.sports[parseInt($('sport').value,10)];
     var rows=matching();
