@@ -4,264 +4,610 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roster Money — which US colleges actually fund your sport</title>
+<meta name="description" content="Free tool built on US federal data. Pick your sport and see which US colleges field it, which ones give athletic aid, how big the squads are and how much each team spends per athlete.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#F1F2EE;
-    --ink:#131C18;
-    --field:#14342B;
-    --line:#D5D9CE;
-    --warn:#8A5600;
-    --muted:#5F6A63;
-    --sans:"Archivo", system-ui, sans-serif;
-    --serif:"Source Serif 4", Georgia, serif;
+    --turf:#14532D;
+    --turf-deep:#0C3B1F;
+    --chalk:#FFFFFF;
+    --ground:#EDF1EA;
+    --ink:#0B2616;
+    --muted:#52675A;
+    --line:#C9D4C6;
+    --red:#B3261E;
+    --amber:#F4B400;
+    --body:"Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --display:"Barlow Condensed", "Arial Narrow", "Barlow", sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);
        font-size:16px;line-height:1.45;font-variant-numeric:tabular-nums}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-  a{color:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
-  header{padding:40px 0 0}
-  .brand{font-weight:700;font-size:15px;letter-spacing:.02em;margin:0 0 26px;color:var(--field)}
+  /* ---------- top band: the pitch ---------- */
+  .pitch{background:var(--turf);color:var(--chalk);position:relative;overflow:hidden}
+  .pitch::before{content:"";position:absolute;right:-170px;top:50%;width:520px;height:520px;
+    margin-top:-260px;border:3px solid rgba(255,255,255,.16);border-radius:50%}
+  .pitch::after{content:"";position:absolute;right:89px;top:0;bottom:0;width:3px;background:rgba(255,255,255,.16)}
+  .pitch .wrap{position:relative;z-index:1;padding-top:22px;padding-bottom:30px}
+  .bar-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .brand{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.01em;margin:0}
+  .listbtn{background:transparent;border:2px solid rgba(255,255,255,.55);color:var(--chalk);
+    border-radius:999px;padding:6px 14px;font-weight:600;font-size:14.5px}
+  .listbtn:hover{border-color:var(--chalk)}
+  .listbtn span{display:inline-block;min-width:22px;margin-left:6px;padding:0 6px;border-radius:999px;
+    background:var(--amber);color:var(--ink);text-align:center}
 
-  .answer{font-family:var(--serif);font-size:clamp(28px,5vw,46px);line-height:1.15;
-          margin:0;max-width:24ch;font-weight:400}
-  .answer b{font-weight:600;color:var(--field)}
-  .subanswer{font-family:var(--serif);font-size:17px;color:var(--muted);margin:14px 0 0;max-width:54ch}
+  .answer{font-family:var(--display);font-weight:700;font-size:clamp(38px,7.2vw,76px);
+    line-height:.98;margin:34px 0 0;max-width:17ch;letter-spacing:-.005em}
+  .subanswer{font-size:17.5px;margin:14px 0 0;max-width:56ch;color:rgba(255,255,255,.88)}
 
-  .controls{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 0;
-            padding:18px 0;border-top:2px solid var(--field);border-bottom:1px solid var(--line)}
-  .ctl{flex:1 1 190px;min-width:150px}
-  .ctl label{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-bottom:5px}
-  .ctl select,.ctl input{width:100%;font:inherit;font-size:15px;padding:9px 10px;
-    background:#FBFBF8;border:1px solid var(--line);border-radius:3px;color:var(--ink)}
-  .ctl select:focus,.ctl input:focus{outline:2px solid var(--field);outline-offset:1px}
+  .pick{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin:28px 0 0;max-width:640px}
+  .pick label,.filters label{display:block;font-size:13.5px;font-weight:500;margin-bottom:5px}
+  .pick select{width:100%;font-size:18px;font-weight:600;padding:12px 12px;border-radius:6px;
+    border:0;background:var(--chalk);color:var(--ink)}
+  .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--turf-deep);border-radius:6px;padding:4px;gap:4px}
+  .seg button{border:0;border-radius:4px;background:transparent;color:var(--chalk);
+    font-size:17px;font-weight:600;padding:9px 6px}
+  .seg button[aria-pressed="true"]{background:var(--chalk);color:var(--ink)}
 
-  .alert{margin:18px 0 0;padding:13px 16px;border-left:4px solid var(--warn);
-         background:#F7F2E7;font-size:14.5px;line-height:1.5;max-width:78ch}
-  .alert b{color:var(--warn)}
+  /* ---------- start screen: sport grid ---------- */
+  .sportgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:26px 0 0}
+  .sportgrid button{text-align:left;background:var(--chalk);border:1px solid var(--line);border-radius:6px;
+    padding:11px 13px;font-weight:600;font-size:15.5px;line-height:1.2}
+  .sportgrid button small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:3px}
+  .sportgrid button:hover{border-color:var(--turf)}
+  .h2{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;margin:34px 0 0}
+  .lead{margin:6px 0 0;color:var(--muted);max-width:66ch}
 
-  table{width:100%;border-collapse:collapse;margin:22px 0 0;font-size:15px}
-  th{text-align:left;font-weight:600;font-size:12.5px;color:var(--muted);
-     padding:0 12px 8px 0;border-bottom:1px solid var(--line);white-space:nowrap}
-  th.num,td.num{text-align:right;padding-right:0}
-  th button{font:inherit;background:none;border:0;padding:0;color:inherit;cursor:pointer}
-  th button:hover{color:var(--ink)}
-  td{padding:11px 12px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
-  td.school{font-weight:500}
-  td .place{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
-  td.div{font-size:13.5px;color:var(--muted)}
-  .nil{color:var(--warn)}
+  /* ---------- division bar (the one loud thing) ---------- */
+  .field{margin:14px 0 0}
+  .strip{display:flex;height:46px;border-radius:6px;overflow:hidden;background:var(--line);gap:2px}
+  .strip button{border:0;padding:0;height:100%;display:flex;min-width:10px;background:none;opacity:.5}
+  .strip button[aria-pressed="true"],.strip.all button{opacity:1}
+  .strip i{display:block;height:100%}
+  .strip .yes{background:var(--turf)}
+  .strip .no{background:repeating-linear-gradient(135deg,#fff 0 5px,#E9B7B2 5px 10px)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  .legend button{background:var(--chalk);border:1px solid var(--line);border-radius:6px;padding:7px 12px;
+    text-align:left;font-size:14.5px;line-height:1.25}
+  .legend button b{display:block;font-weight:600}
+  .legend button small{color:var(--muted);font-size:13px}
+  .legend button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--chalk)}
+  .legend button[aria-pressed="true"] small{color:rgba(255,255,255,.8)}
+  .key{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;font-size:13.5px;color:var(--muted)}
+  .key i{display:inline-block;width:22px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+  /* ---------- filters ---------- */
+  .filters{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:12px;align-items:end;margin:24px 0 0}
+  .filters input[type=search],.filters select{width:100%;padding:10px 11px;border:1px solid var(--line);
+    border-radius:6px;background:var(--chalk);font-size:15.5px}
+  .check{display:flex;align-items:center;gap:8px;padding:10px 0;font-size:15.5px;font-weight:500;white-space:nowrap}
+  .check input{width:19px;height:19px;accent-color:var(--turf)}
+  .status{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 18px;align-items:baseline;
+    margin:20px 0 0;font-size:14.5px;color:var(--muted)}
+  .status b{color:var(--ink);font-weight:600}
+  .link{background:none;border:0;padding:0;color:var(--turf);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+
+  .alert{margin:16px 0 0;padding:12px 15px;border-left:5px solid var(--red);background:var(--chalk);
+    font-size:15px;max-width:80ch;border-radius:0 6px 6px 0}
+
+  /* ---------- table ---------- */
+  .tablebox{margin:12px 0 0;background:var(--chalk);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:15.5px}
+  th{text-align:left;font-weight:600;font-size:13.5px;color:var(--muted);padding:12px 14px;
+     border-bottom:2px solid var(--ink);white-space:nowrap;vertical-align:bottom}
+  th small{display:block;font-weight:400;font-size:12px;white-space:normal;max-width:17ch;margin-left:auto}
+  th.num,td.num{text-align:right}
+  th button{background:none;border:0;padding:0;font-weight:600;color:var(--muted)}
+  th button:hover,th button[data-on]{color:var(--ink)}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .name{background:none;border:0;padding:0;text-align:left;font-weight:600;text-decoration:underline;
+    text-decoration-color:var(--line);text-underline-offset:3px}
+  .name:hover{text-decoration-color:var(--turf)}
+  .place{display:block;font-size:13.5px;color:var(--muted);margin-top:1px}
+  td.div{font-size:14.5px;color:var(--muted)}
+  .nil{color:var(--red);font-weight:500}
   .money{font-weight:600}
+  .star{background:none;border:1px solid var(--line);border-radius:6px;width:36px;height:34px;font-size:17px;line-height:1;color:var(--muted)}
+  .star[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:var(--ink)}
 
-  .more{margin:22px 0 0}
-  .more button{font:inherit;font-size:15px;padding:9px 18px;background:var(--field);
-    color:var(--paper);border:0;border-radius:3px;cursor:pointer}
-  .empty{padding:40px 0;font-family:var(--serif);font-size:18px;color:var(--muted)}
+  .more{margin:18px 0 0}
+  .btn{background:var(--turf);color:var(--chalk);border:0;border-radius:6px;padding:10px 18px;font-weight:600;font-size:15.5px}
+  .btn.ghost{background:var(--chalk);color:var(--ink);border:1px solid var(--line)}
+  .empty{padding:26px 16px;color:var(--muted);font-size:16.5px}
 
-  footer{margin:56px 0 70px;padding-top:22px;border-top:1px solid var(--line);
-         font-family:var(--serif);font-size:15px;color:var(--muted)}
-  footer h3{font-family:var(--sans);font-size:15px;font-weight:600;color:var(--ink);margin:0 0 8px}
-  footer p{margin:0 0 13px;max-width:74ch;line-height:1.6}
-  footer b{color:var(--ink)}
+  /* ---------- dialogs ---------- */
+  dialog{border:0;border-radius:10px;padding:0;width:min(760px,calc(100vw - 24px));max-height:calc(100vh - 40px);
+    color:var(--ink);background:var(--chalk)}
+  dialog::backdrop{background:rgba(11,38,22,.6)}
+  .dhead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:20px 22px 14px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--chalk)}
+  .dhead h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;margin:0}
+  .dhead p{margin:4px 0 0;color:var(--muted);font-size:14.5px}
+  .x{background:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-weight:600;flex:none}
+  .dbody{padding:16px 22px 22px}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 6px}
+  .fact{border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+  .fact b{display:block;font-family:var(--display);font-size:28px;line-height:1.1}
+  .fact span{font-size:13.5px;color:var(--muted)}
+  .dbody table{font-size:15px}
+  .dbody th{padding:10px 8px 8px 0;border-bottom-width:1px}
+  .dbody td{padding:8px 8px 8px 0}
+  .dbody tr.here td{background:#F6F9F3;font-weight:600}
+  .small{font-size:13.5px;color:var(--muted);margin:12px 0 0;max-width:70ch}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+
+  /* ---------- notes ---------- */
+  .notes{margin:48px 0 0;padding:24px 0 60px;border-top:2px solid var(--ink)}
+  .notes h2{font-family:var(--display);font-weight:700;font-size:28px;margin:0 0 12px}
+  .notes p{margin:0 0 12px;max-width:76ch;color:#27402F}
+  .notes p b{color:var(--ink)}
+
+  [hidden]{display:none!important}
 
   @media (max-width:760px){
-    thead{display:none}
-    tr{display:block;padding:14px 0;border-bottom:1px solid var(--line)}
-    td{display:flex;justify-content:space-between;gap:16px;border:0;padding:3px 0}
-    td.school{display:block;margin-bottom:6px}
-    td::before{content:attr(data-l);font-size:13px;color:var(--muted)}
-    td.school::before{content:none}
+    .pitch::before,.pitch::after{opacity:.6}
+    .answer{font-size:34px;margin-top:22px}
+    .subanswer{font-size:16px}
+    .pick{margin-top:20px}
+    .pitch .wrap{padding-bottom:22px}
+    .pick{grid-template-columns:1fr}
+    .filters{grid-template-columns:1fr}
+    .check{white-space:normal;padding:2px 0}
+    .tablebox thead{display:none}
+    .tablebox tr{display:block;padding:13px 14px;border-bottom:1px solid var(--line);position:relative}
+    .tablebox tr:last-child{border-bottom:0}
+    .tablebox td{display:flex;justify-content:space-between;gap:16px;border:0;padding:2px 0;text-align:right}
+    .tablebox td::before{content:attr(data-l);font-size:13.5px;color:var(--muted);text-align:left}
+    .tablebox td.school{display:block;text-align:left;padding-right:48px;margin-bottom:6px}
+    .tablebox td.school::before,.tablebox td.pin::before{content:none}
+    .tablebox td.pin{position:absolute;top:11px;right:12px;padding:0}
+    .facts{grid-template-columns:1fr}
+    .sportgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
   }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<header>
-  <p class="brand">Roster Money</p>
-  <h1 class="answer" id="answer">Loading the 2024–25 federal athletics data…</h1>
-  <p class="subanswer" id="subanswer"></p>
+<header class="pitch">
+  <div class="wrap">
+    <div class="bar-top">
+      <p class="brand">Roster Money</p>
+      <button class="listbtn" id="openList" type="button">My shortlist<span id="listCount">0</span></button>
+    </div>
+    <h1 class="answer" id="answer">Loading the data…</h1>
+    <p class="subanswer" id="subanswer"></p>
+
+    <div class="pick">
+      <div>
+        <label for="sport">Sport</label>
+        <select id="sport"></select>
+      </div>
+      <div>
+        <label id="teamLabel">Team</label>
+        <div class="seg" role="group" aria-labelledby="teamLabel">
+          <button type="button" data-team="m" aria-pressed="true">Men's</button>
+          <button type="button" data-team="w" aria-pressed="false">Women's</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
-<div class="controls">
-  <div class="ctl">
-    <label for="sport">Sport</label>
-    <select id="sport"></select>
+<main class="wrap">
+
+  <!-- start screen -->
+  <section id="start" hidden>
+    <h2 class="h2">Or tap your sport</h2>
+    <p class="lead">The number under each sport is how many colleges field it, men's and women's teams together.</p>
+    <div class="sportgrid" id="sportgrid"></div>
+  </section>
+
+  <!-- results -->
+  <section id="results" hidden>
+    <h2 class="h2">Where the teams are</h2>
+    <p class="lead">Each block is a level of college sport, sized by how many teams play there. Tap one to see only those colleges.</p>
+    <div class="field">
+      <div class="strip all" id="strip"></div>
+      <div class="legend" id="legend"></div>
+      <div class="key">
+        <span><i style="background:var(--turf)"></i>college gives athletic aid</span>
+        <span><i style="background:repeating-linear-gradient(135deg,#fff 0 5px,#E9B7B2 5px 10px);border:1px solid #E9B7B2"></i>college gives no athletic aid</span>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div>
+        <label for="q">Find a college</label>
+        <input id="q" type="search" placeholder="Type a name, like Stanford" autocomplete="off">
+      </div>
+      <div>
+        <label for="state">US state</label>
+        <select id="state"></select>
+      </div>
+      <label class="check"><input type="checkbox" id="aidOnly" checked> Only colleges that give athletic aid</label>
+    </div>
+
+    <div id="alert"></div>
+
+    <div class="status">
+      <span id="count"></span>
+      <button class="link" id="share" type="button">Copy a link to this view</button>
+    </div>
+
+    <div class="tablebox">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>College</th>
+            <th>Level</th>
+            <th class="num"><button type="button" data-sort="roster">Squad size</button></th>
+            <th class="num"><button type="button" data-sort="spend">Team spend per athlete</button><small>this sport only</small></th>
+            <th class="num"><button type="button" data-sort="aid">Aid per athlete</button><small>whole department, not this sport</small></th>
+            <th><span style="position:absolute;left:-9999px">Shortlist</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="empty" id="empty" hidden></p>
+    </div>
+    <div class="more" id="more"></div>
+  </section>
+
+  <section class="notes">
+    <h2>Read this before you trust a number</h2>
+    <p><b>Aid per athlete is for the whole department, not your sport.</b> Colleges report athletic aid as one total for all men's teams and one for all women's teams. Nothing says how much went to your sport. At a college with a football team, most of the men's money goes to football. Use the figure to see how well a department funds its athletes overall, not as an offer you might get.</p>
+    <p><b>Team spend per athlete is for the sport you picked.</b> It covers the cost of running the team for each athlete: travel, hotels, meals, kit, equipment and officials. It leaves out scholarships and coach pay. It is the best sign in this data of how seriously a college takes that team.</p>
+    <p><b>NCAA Division III cannot give athletic scholarships at all.</b> Those colleges show "No athletic aid". They can still give academic or need-based money, which this data does not cover.</p>
+    <p><b>Squad size is last season's count of athletes</b>, and Division I roster rules changed in 2025. Read it as how big the team is, not as how many places are open.</p>
+    <p>Source: US Department of Education, Equity in Athletics Disclosure Act, 2024–25 collection. Every college that takes federal student aid and runs a sports programme has to file it. Nothing here is an offer, a prediction or advice. It is a map of where the teams and the money are, so you know which coaches are worth emailing.</p>
+  </section>
+</main>
+
+<dialog id="schoolDlg" aria-labelledby="schoolName">
+  <div class="dhead">
+    <div><h2 id="schoolName"></h2><p id="schoolMeta"></p></div>
+    <button class="x" type="button" data-close>Close</button>
   </div>
-  <div class="ctl">
-    <label for="gender">Team</label>
-    <select id="gender">
-      <option value="m">Men's</option>
-      <option value="w">Women's</option>
-    </select>
+  <div class="dbody" id="schoolBody"></div>
+</dialog>
+
+<dialog id="listDlg" aria-labelledby="listTitle">
+  <div class="dhead">
+    <div><h2 id="listTitle">My shortlist</h2><p>Saved on this device only. Nobody else can see it.</p></div>
+    <button class="x" type="button" data-close>Close</button>
   </div>
-  <div class="ctl">
-    <label for="division">Division</label>
-    <select id="division"></select>
-  </div>
-  <div class="ctl">
-    <label for="q">Find a school</label>
-    <input id="q" type="search" placeholder="e.g. Stanford" autocomplete="off">
-  </div>
-</div>
-
-<div id="alert"></div>
-
-<table id="tbl">
-  <thead>
-    <tr>
-      <th>School</th>
-      <th>Division</th>
-      <th class="num"><button data-sort="roster">Roster spots</button></th>
-      <th class="num"><button data-sort="aid">Aid per athlete</button></th>
-      <th class="num"><button data-sort="spend">Spend per athlete</button></th>
-    </tr>
-  </thead>
-  <tbody id="rows"></tbody>
-</table>
-
-<div class="more" id="more"></div>
-
-<footer>
-  <h3>Read this before you trust a number</h3>
-  <p><b>Aid per athlete is school-wide, not sport-specific.</b> The federal filing reports athletic aid as one total for all men's teams and one for all women's teams. It does not say how much went to your sport. At a school with a football team, most of that money is going to football. Treat the figure as a signal of how much a department spends on its athletes overall, not as an offer you might receive.</p>
-  <p><b>Division III cannot award athletic scholarships at all.</b> Those schools appear here with no aid figure. They may still offer academic or need-based money, which this data does not cover.</p>
-  <p><b>Roster spots are last season's participant counts</b>, and Division I roster rules changed recently. Read the number as squad size, not as openings.</p>
-  <p>Source: US Department of Education, Equity in Athletics Disclosure Act, 2024–25 collection. Every institution that receives federal student aid and runs an intercollegiate programme has to file. Nothing here is an offer, a prediction, or advice. It is a map of where the money and the roster spots are, so you know which coaches are worth emailing.</p>
-</footer>
-
-</div>
+  <div class="dbody" id="listBody"></div>
+</dialog>
 
 <script>
 (function(){
   'use strict';
-  var DATA=null, shown=50, sortKey='aid', sortDir=-1;
+  var DATA=null, shown=50, sortKey='aid', sortDir=-1, team='m', group='', bySchool=null, saved=[];
   var $=function(i){return document.getElementById(i)};
+  var GROUPS=[
+    ['d1','NCAA Division I'],['d2','NCAA Division II'],['d3','NCAA Division III'],
+    ['naia','NAIA'],['juco','Junior and community colleges'],['other','Other associations']
+  ];
 
-  function money(n){ return '$'+n.toLocaleString('en-US') }
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function num(n){return n.toLocaleString('en-US')}
+  function money(n){return '$'+num(n)}
+  function groupOf(d){
+    if(d.indexOf('NCAA Division III')===0) return 'd3';
+    if(d.indexOf('NCAA Division II')===0) return 'd2';
+    if(d.indexOf('NCAA Division I')===0) return 'd1';
+    if(d.indexOf('NAIA')===0) return 'naia';
+    if(d.indexOf('NJCAA')===0||d==='CCCAA'||d==='NWAC') return 'juco';
+    return 'other';
+  }
+  function stateOf(place){var p=place.split(', ').pop(); return /^[A-Z]{2}$/.test(p)?p:''}
+  function teamWord(){return team==='m'?"men's":"women's"}
+  function sportIdx(){var v=$('sport').value; return v===''?-1:parseInt(v,10)}
+
+  /* ---- analytics: one event each time a sport is chosen ---- */
+  function trackSport(name){
+    var tries=0;
+    (function send(){
+      if(window.goatcounter&&window.goatcounter.count){
+        window.goatcounter.count({path:'sport-'+name,title:'Sport picked: '+name,event:true});
+      }else if(tries++<20){setTimeout(send,250)}
+    })();
+  }
+
+  /* ---- shortlist storage (this browser only) ---- */
+  function loadSaved(){try{saved=JSON.parse(localStorage.getItem('rm-shortlist')||'[]')||[]}catch(e){saved=[]}}
+  function storeSaved(){try{localStorage.setItem('rm-shortlist',JSON.stringify(saved))}catch(e){} $('listCount').textContent=saved.length}
+  function keyFor(si,sp,t){return si+'|'+sp+'|'+t}
+  function toggleSaved(k){var i=saved.indexOf(k); if(i>-1) saved.splice(i,1); else saved.push(k); storeSaved()}
+
+  /* ---- link state ---- */
+  function writeHash(){
+    var p=[], s=sportIdx();
+    if(s>-1){
+      p.push('sport='+encodeURIComponent(DATA.sports[s])); p.push('team='+team);
+      if(group) p.push('level='+group);
+      if($('state').value) p.push('state='+$('state').value);
+      if(!$('aidOnly').checked) p.push('aid=all');
+    }
+    try{history.replaceState(null,'',p.length?'#'+p.join('&'):location.pathname+location.search)}catch(e){}
+  }
+  function readHash(){
+    var o={}; location.hash.replace(/^#/,'').split('&').forEach(function(kv){
+      var i=kv.indexOf('='); if(i>0) o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));
+    });
+    if(o.sport){var i=DATA.sports.indexOf(o.sport); if(i>-1) $('sport').value=i}
+    if(o.team==='w') team='w';
+    if(o.level&&GROUPS.some(function(g){return g[0]===o.level})) group=o.level;
+    if(o.state) $('state').value=o.state;
+    if(o.aid==='all') $('aidOnly').checked=false;
+  }
 
   function load(){
-    fetch('roster.json').then(function(r){return r.json()}).then(function(d){
-      DATA=d; init();
-    }).catch(function(){
-      $('answer').textContent='Could not load roster.json.';
-      $('subanswer').textContent='It has to sit in the same folder as this page, and the page has to be served over http rather than opened straight from disk. Run: python3 -m http.server';
+    fetch('roster.json').then(function(r){return r.json()}).then(function(d){DATA=d; init()})
+    .catch(function(){
+      $('answer').textContent='The data did not load.';
+      $('subanswer').textContent='Check your connection and reload the page.';
     });
   }
 
   function init(){
+    loadSaved(); $('listCount').textContent=saved.length;
+
     var sp=$('sport');
-    DATA.sports.forEach(function(s,i){
-      var o=document.createElement('option'); o.value=i; o.textContent=s; sp.appendChild(o);
-    });
-   sp.insertBefore(new Option('Choose your sport…',''), sp.firstChild);
+    sp.appendChild(new Option('Choose your sport…',''));
+    DATA.sports.forEach(function(s,i){sp.appendChild(new Option(s,i))});
     sp.value='';
 
-    var divs=Object.keys(DATA.schools.reduce(function(a,s){a[s[2]]=1;return a},{})).sort();
-    $('division').innerHTML='<option value="~aid">Only divisions that give athletic aid</option>'+
-      '<option value="">All divisions</option>'+
-      divs.map(function(d){return '<option value="'+d+'">'+d+'</option>'}).join('');
+    var states={};
+    DATA.schools.forEach(function(s){var st=stateOf(s[1]); if(st) states[st]=1});
+    $('state').innerHTML='<option value="">All states</option>'+Object.keys(states).sort().map(function(s){
+      return '<option>'+s+'</option>'}).join('');
 
-    ['sport','gender','division','q'].forEach(function(id){
-      $(id).addEventListener('input',function(){shown=50;render()});
+    // start-screen grid: colleges fielding each sport
+    var per={};
+    DATA.teams.forEach(function(t){(per[t[1]]=per[t[1]]||{})[t[0]]=1});
+    $('sportgrid').innerHTML=DATA.sports.map(function(s,i){
+      return '<button type="button" data-sport="'+i+'">'+esc(s)+'<small>'+num(Object.keys(per[i]||{}).length)+' colleges</small></button>';
+    }).join('');
+
+    readHash();
+    setTeamButtons();
+
+    sp.addEventListener('change',function(){
+      group=''; shown=50;
+      if(sp.value!=='') trackSport(DATA.sports[sportIdx()]);
+      render();
+    });
+    $('sportgrid').addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      sp.value=b.getAttribute('data-sport'); group=''; shown=50;
+      trackSport(DATA.sports[sportIdx()]); render();
+      window.scrollTo(0,0);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
+      b.addEventListener('click',function(){team=b.getAttribute('data-team'); shown=50; setTeamButtons(); render()});
+    });
+    ['q','state','aidOnly'].forEach(function(id){
+      $(id).addEventListener('input',function(){shown=50; render()});
     });
     Array.prototype.forEach.call(document.querySelectorAll('th button'),function(b){
       b.addEventListener('click',function(){
         var k=b.getAttribute('data-sort');
-        if(sortKey===k) sortDir=-sortDir; else {sortKey=k;sortDir=-1;}
+        if(sortKey===k) sortDir=-sortDir; else{sortKey=k; sortDir=-1}
         render();
       });
     });
+    function pickGroup(e){
+      var b=e.target.closest('button'); if(!b) return;
+      var g=b.getAttribute('data-g'); group=(group===g)?'':g; shown=50; render();
+    }
+    $('strip').addEventListener('click',pickGroup);
+    $('legend').addEventListener('click',pickGroup);
+
+    $('rows').addEventListener('click',function(e){
+      var s=e.target.closest('.star'), n=e.target.closest('.name');
+      if(s){toggleSaved(s.getAttribute('data-k')); s.setAttribute('aria-pressed',saved.indexOf(s.getAttribute('data-k'))>-1)}
+      else if(n){openSchool(parseInt(n.getAttribute('data-si'),10))}
+    });
+    $('share').addEventListener('click',function(){
+      var b=$('share'), done=function(t){b.textContent=t; setTimeout(function(){b.textContent='Copy a link to this view'},1800)};
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(location.href).then(function(){done('Link copied')},function(){done('Copy it from the address bar')});
+      }else done('Copy it from the address bar');
+    });
+    $('openList').addEventListener('click',openList);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-close]'),function(b){
+      b.addEventListener('click',function(){b.closest('dialog').close()});
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('dialog'),function(d){
+      d.addEventListener('click',function(e){if(e.target===d) d.close()});
+    });
+    $('listBody').addEventListener('click',listClick);
     render();
   }
 
-  function matching(divOverride){
-    var sportIdx=parseInt($('sport').value,10);
-    var men=$('gender').value==='m';
-    var div=divOverride!==undefined?divOverride:$('division').value;
-    var q=$('q').value.trim().toLowerCase();
+  function setTeamButtons(){
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
+      b.setAttribute('aria-pressed',b.getAttribute('data-team')===team);
+    });
+  }
 
-    var out=[];
+  /* every team for the chosen sport and team type, before filters */
+  function base(){
+    var s=sportIdx(), men=team==='m', out=[];
     DATA.teams.forEach(function(t){
-      if(t[1]!==sportIdx) return;
-      var roster = men ? t[2] : t[3];
-      if(!roster) return;
-      var s=DATA.schools[t[0]];
-      var aid = men ? s[3] : s[4];
-      if(div==='~aid' && !aid) return;
-      if(div && div!=='~aid' && s[2]!==div) return;
-      if(q && s[0].toLowerCase().indexOf(q)===-1) return;
-      out.push({name:s[0], place:s[1], div:s[2], roster:roster, aid:aid,
-                spend: men ? t[4] : t[5]});
+      if(t[1]!==s) return;
+      var roster=men?t[2]:t[3]; if(!roster) return;
+      var sc=DATA.schools[t[0]];
+      out.push({si:t[0],name:sc[0],place:sc[1],div:sc[2],g:groupOf(sc[2]),st:stateOf(sc[1]),
+                roster:roster,aid:(men?sc[3]:sc[4])||0,spend:(men?t[4]:t[5])||0});
     });
     return out;
   }
 
-   function render(){
-    if($('sport').value===''){
+  function render(){
+    var s=sportIdx();
+    if(s<0){
       $('answer').textContent='Which sport do you play?';
-      $('subanswer').textContent='2,032 US colleges filed athletics data for 2024–25. Pick a sport to see which of them fund it, how much they spend per athlete, and how many roster spots exist.';
-      $('alert').innerHTML='';
-      $('tbl').style.display='none';
-      $('more').innerHTML='';
-      return;
+      $('subanswer').textContent=num(DATA.schools.length)+' US colleges reported their sports data for 2024–25. Pick a sport to see who has a team, who gives athletic aid and how much each team spends.';
+      $('start').hidden=false; $('results').hidden=true; writeHash(); return;
     }
-    var men=$('gender').value==='m';
-    var sportName=DATA.sports[parseInt($('sport').value,10)];
-    var rows=matching();
-    var all=matching('');
+    $('start').hidden=true; $('results').hidden=false;
 
+    var all=base(), sportName=DATA.sports[s];
     var funded=all.filter(function(r){return r.aid}).length;
     var spots=all.reduce(function(a,r){return a+r.roster},0);
+    $('answer').textContent=num(all.length)+' US colleges have a '+teamWord()+' '+sportName.toLowerCase()+' team. '+num(funded)+' give athletic aid.';
+    $('subanswer').textContent=num(spots)+' athletes were on those squads last season.';
 
-    $('answer').innerHTML='<b>'+all.length+'</b> US colleges field '+
-      (men?"men's ":"women's ")+sportName.toLowerCase()+'. <b>'+funded+
-      '</b> of them give athletic aid.';
-    $('subanswer').textContent=spots.toLocaleString('en-US')+
-      ' roster spots across the country last season.';
-
-    var div=$('division').value;
-    $('alert').innerHTML = div.indexOf('III')>-1
-      ? '<div class="alert"><b>Division III schools cannot award athletic scholarships.</b> '+
-        'The rosters are real and the coaching is often strong, but any money would have to come '+
-        'from academic or need-based aid instead.</div>'
-      : '';
-
-    rows.sort(function(a,b){
-      var x=a[sortKey], y=b[sortKey];
-      if(!x && x!==0) return 1;
-      if(!y && y!==0) return -1;
-      return (x-y)*sortDir;
-    });
-
-    var slice=rows.slice(0,shown);
-    $('rows').innerHTML = slice.map(function(r){
-      return '<tr>'+
-        '<td class="school">'+r.name+'<span class="place">'+r.place+'</span></td>'+
-        '<td class="div" data-l="Division">'+r.div+'</td>'+
-        '<td class="num" data-l="Roster spots">'+r.roster+'</td>'+
-        '<td class="num '+(r.aid?'money':'nil')+'" data-l="Aid per athlete">'+
-          (r.aid?money(r.aid):'No athletic aid')+'</td>'+
-        '<td class="num" data-l="Spend per athlete">'+(r.spend?money(r.spend):'—')+'</td>'+
-      '</tr>';
+    // division bar
+    var tot={}; GROUPS.forEach(function(g){tot[g[0]]={n:0,f:0}});
+    all.forEach(function(r){tot[r.g].n++; if(r.aid) tot[r.g].f++});
+    var live=GROUPS.filter(function(g){return tot[g[0]].n});
+    $('strip').className='strip'+(group?'':' all');
+    $('strip').innerHTML=live.map(function(g){
+      var t=tot[g[0]], yes=t.f/t.n*100;
+      return '<button type="button" data-g="'+g[0]+'" aria-pressed="'+(group===g[0])+'" style="flex:'+t.n+' 1 0" '+
+        'aria-label="'+g[1]+': '+t.n+' teams, '+t.f+' at colleges with athletic aid">'+
+        '<i class="yes" style="width:'+yes+'%"></i><i class="no" style="width:'+(100-yes)+'%"></i></button>';
+    }).join('');
+    $('legend').innerHTML=live.map(function(g){
+      var t=tot[g[0]];
+      return '<button type="button" data-g="'+g[0]+'" aria-pressed="'+(group===g[0])+'"><b>'+g[1]+'</b>'+
+        '<small>'+num(t.n)+' teams, '+num(t.f)+' with aid</small></button>';
     }).join('');
 
-    $('tbl').style.display = slice.length ? '' : 'none';
-    $('more').innerHTML = rows.length>shown
-      ? '<button id="mb">Show '+Math.min(50,rows.length-shown)+' more of '+rows.length+'</button>'
-      : (slice.length ? '' : '<p class="empty">Nothing matches that combination. Try All divisions, or clear the school search.</p>');
-    if($('mb')) $('mb').addEventListener('click',function(){shown+=50;render()});
+    // filters
+    var aidOnly=$('aidOnly').checked, st=$('state').value, q=$('q').value.trim().toLowerCase();
+    var rows=all.filter(function(r){
+      if(group&&r.g!==group) return false;
+      if(aidOnly&&!r.aid) return false;
+      if(st&&r.st!==st) return false;
+      if(q&&r.name.toLowerCase().indexOf(q)===-1) return false;
+      return true;
+    });
+
+    var a='';
+    if(group==='d3') a='<b>NCAA Division III colleges cannot give athletic scholarships.</b> The teams are real, but any money has to come from academic or need-based aid. A handful still reported some athletic aid in the federal filing, so they show a figure.'+
+      (aidOnly?' Untick "Only colleges that give athletic aid" to see them.':'');
+    else if(group==='juco') a='<b>Junior and community colleges are two-year colleges.</b> Many athletes play two years there and then move to a four-year college. California community colleges (CCCAA) give no athletic aid.';
+    $('alert').innerHTML=a?'<div class="alert">'+a+'</div>':'';
+
+    rows.sort(function(x,y){
+      var p=x[sortKey], r=y[sortKey];
+      if(!p&&!r) return x.name.localeCompare(y.name);
+      if(!p) return 1; if(!r) return -1;
+      return (p-r)*sortDir||x.name.localeCompare(y.name);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('th button'),function(b){
+      var on=b.getAttribute('data-sort')===sortKey;
+      if(on) b.setAttribute('data-on',''); else b.removeAttribute('data-on');
+      b.textContent=b.textContent.replace(/ [↓↑]$/,'')+(on?(sortDir<0?' ↓':' ↑'):'');
+    });
+
+    $('count').innerHTML='Showing <b>'+num(Math.min(shown,rows.length))+'</b> of <b>'+num(rows.length)+'</b> colleges';
+
+    var slice=rows.slice(0,shown);
+    $('rows').innerHTML=slice.map(function(r){
+      var k=keyFor(r.si,s,team);
+      return '<tr>'+
+        '<td class="school"><button type="button" class="name" data-si="'+r.si+'">'+esc(r.name)+'</button><span class="place">'+esc(r.place)+'</span></td>'+
+        '<td class="div" data-l="Level">'+esc(r.div)+'</td>'+
+        '<td class="num" data-l="Squad size">'+r.roster+'</td>'+
+        '<td class="num" data-l="Team spend per athlete">'+(r.spend?money(r.spend):'Not reported')+'</td>'+
+        '<td class="num '+(r.aid?'money':'nil')+'" data-l="Aid per athlete (whole dept.)">'+(r.aid?money(r.aid):'No athletic aid')+'</td>'+
+        '<td class="pin"><button type="button" class="star" data-k="'+k+'" aria-pressed="'+(saved.indexOf(k)>-1)+'" aria-label="Save '+esc(r.name)+' to my shortlist" title="Save to my shortlist">★</button></td>'+
+      '</tr>';
+    }).join('');
+    $('tbl').hidden=!slice.length;
+    $('empty').hidden=!!slice.length;
+    if(!slice.length) $('empty').textContent='No colleges match. Tap the selected level again to clear it, pick "All states", or clear the college name.';
+    $('more').innerHTML=rows.length>shown?'<button class="btn" id="mb" type="button">Show '+Math.min(50,rows.length-shown)+' more</button>':'';
+    if($('mb')) $('mb').addEventListener('click',function(){shown+=50; render()});
+    writeHash();
+  }
+
+  /* ---- college profile ---- */
+  function openSchool(si){
+    if(!bySchool){bySchool={}; DATA.teams.forEach(function(t){(bySchool[t[0]]=bySchool[t[0]]||[]).push(t)})}
+    var sc=DATA.schools[si], teams=(bySchool[si]||[]).slice().sort(function(a,b){return DATA.sports[a[1]].localeCompare(DATA.sports[b[1]])});
+    var cur=sportIdx();
+    $('schoolName').textContent=sc[0];
+    $('schoolMeta').textContent=sc[1]+' · '+sc[2];
+    var h='<div class="facts">'+
+      '<div class="fact"><b>'+(sc[3]?money(sc[3]):'None')+'</b><span>athletic aid per male athlete, all men\'s teams together</span></div>'+
+      '<div class="fact"><b>'+(sc[4]?money(sc[4]):'None')+'</b><span>athletic aid per female athlete, all women\'s teams together</span></div></div>'+
+      '<table><thead><tr><th>Every team here</th><th class="num">Men</th><th class="num">Spend each</th><th class="num">Women</th><th class="num">Spend each</th></tr></thead><tbody>';
+    teams.forEach(function(t){
+      h+='<tr'+(t[1]===cur?' class="here"':'')+'><td>'+esc(DATA.sports[t[1]])+'</td>'+
+        '<td class="num">'+(t[2]||'–')+'</td><td class="num">'+(t[2]&&t[4]?money(t[4]):'–')+'</td>'+
+        '<td class="num">'+(t[3]||'–')+'</td><td class="num">'+(t[3]&&t[5]?money(t[5]):'–')+'</td></tr>';
+    });
+    h+='</tbody></table><p class="small">Men and Women columns are squad sizes. "Spend each" is what the team spent per athlete on travel, kit, meals and officials. A dash means no team.</p>'+
+      '<div class="actions"><a class="btn ghost" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/search?q='+
+      encodeURIComponent(sc[0]+' athletics '+(cur>-1?teamWord()+' '+DATA.sports[cur]:'')+' coaches')+'">Search for this team\'s coaches</a></div>';
+    $('schoolBody').innerHTML=h;
+    $('schoolDlg').showModal();
+  }
+
+  /* ---- shortlist ---- */
+  function listRows(){
+    return saved.map(function(k){
+      var p=k.split('|'), si=+p[0], sp=+p[1], t=p[2], sc=DATA.schools[si], men=t==='m', row=null;
+      if(!sc) return null;
+      DATA.teams.forEach(function(x){if(x[0]===si&&x[1]===sp) row=x});
+      return {k:k,si:si,name:sc[0],place:sc[1],div:sc[2],sport:(men?"Men's ":"Women's ")+DATA.sports[sp],
+        roster:row?(men?row[2]:row[3])||0:0, spend:row?(men?row[4]:row[5])||0:0, aid:(men?sc[3]:sc[4])||0};
+    }).filter(Boolean);
+  }
+  function drawList(){
+    var rows=listRows();
+    if(!rows.length){
+      $('listBody').innerHTML='<p class="empty" style="padding:6px 0">Nothing saved yet. Tap the ★ next to a college to keep it here, then compare your picks side by side.</p>';
+      return;
+    }
+    var h='<table><thead><tr><th>College</th><th>Team</th><th class="num">Squad</th><th class="num">Team spend</th><th class="num">Aid (dept.)</th><th></th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      h+='<tr><td><b>'+esc(r.name)+'</b><span class="place">'+esc(r.place)+' · '+esc(r.div)+'</span></td><td>'+esc(r.sport)+'</td>'+
+        '<td class="num">'+(r.roster||'–')+'</td><td class="num">'+(r.spend?money(r.spend):'–')+'</td>'+
+        '<td class="num">'+(r.aid?money(r.aid):'None')+'</td>'+
+        '<td class="num"><button type="button" class="link" data-rm="'+r.k+'">Remove</button></td></tr>';
+    });
+    h+='</tbody></table><div class="actions"><button type="button" class="btn" data-csv>Download as a spreadsheet (CSV)</button>'+
+      '<button type="button" class="btn ghost" data-clear>Clear shortlist</button></div>'+
+      '<p class="small">Team spend is per athlete for that sport. Aid is per athlete across the whole men\'s or women\'s department.</p>';
+    $('listBody').innerHTML=h;
+  }
+  function openList(){drawList(); $('listDlg').showModal()}
+  function listClick(e){
+    var b=e.target.closest('button'); if(!b) return;
+    if(b.hasAttribute('data-rm')){toggleSaved(b.getAttribute('data-rm')); drawList(); if(sportIdx()>-1) render()}
+    else if(b.hasAttribute('data-clear')){saved=[]; storeSaved(); drawList(); if(sportIdx()>-1) render()}
+    else if(b.hasAttribute('data-csv')){
+      var q=function(v){return '"'+String(v).replace(/"/g,'""')+'"'};
+      var lines=[['College','Location','Level','Team','Squad size','Team spend per athlete (USD)','Dept athletic aid per athlete (USD)'].map(q).join(',')];
+      listRows().forEach(function(r){lines.push([r.name,r.place,r.div,r.sport,r.roster||'',r.spend||'',r.aid||0].map(q).join(','))});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([lines.join('\r\n')],{type:'text/csv'}));
+      a.download='roster-money-shortlist.csv'; document.body.appendChild(a); a.click(); a.remove();
+    }
   }
 
   load();
 })();
 </script>
-  <script data-goatcounter="https://vibecoder.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "62953102102a47ff9044390a8b787f77"}'></script><!-- End Cloudflare Web Analytics -->
+<script data-goatcounter="https://vibecoder.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "62953102102a47ff9044390a8b787f77"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
